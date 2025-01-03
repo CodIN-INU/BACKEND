@@ -2,6 +2,7 @@ package inu.codin.codin.domain.post.domain.reply.service;
 
 import inu.codin.codin.common.exception.NotFoundException;
 import inu.codin.codin.common.security.util.SecurityUtils;
+import inu.codin.codin.domain.notification.service.NotificationService;
 import inu.codin.codin.domain.post.domain.comment.dto.response.CommentResponseDTO;
 import inu.codin.codin.domain.post.domain.comment.entity.CommentEntity;
 import inu.codin.codin.domain.post.domain.comment.repository.CommentRepository;
@@ -37,6 +38,7 @@ public class ReplyCommentService {
     private final UserRepository userRepository;
 
     private final LikeService likeService;
+    private final NotificationService notificationService;
     private final RedisService redisService;
 
     // 대댓글 추가
@@ -64,6 +66,7 @@ public class ReplyCommentService {
         redisService.applyBestScore(1, post.get_id());
         postRepository.save(post);
         log.info("대댓글 추가후, commentCount: {}", post.getCommentCount());
+        notificationService.sendNotificationMessageByReply(comment.getUserId(), post.get_id().toString(), reply.getContent());
     }
 
     // 대댓글 삭제 (Soft Delete)
