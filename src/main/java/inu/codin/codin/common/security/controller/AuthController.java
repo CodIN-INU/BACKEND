@@ -62,9 +62,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<SingleResponse<?>> portalSignUp(@RequestBody @Valid SignUpAndLoginRequestDto signUpAndLoginRequestDto, HttpServletResponse response) {
         authService.login(signUpAndLoginRequestDto, response);
-
         return ResponseEntity.ok()
-                .body(new SingleResponse<>(200, "포탈 로그인 진행 완료", "기존 유저 로그인 완료"));
+                .body(new SingleResponse<>(200, "로그인 완료", "기존 유저 로그인 완료"));
 
     }
 
