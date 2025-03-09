@@ -16,6 +16,7 @@ import inu.codin.codin.domain.report.dto.response.ReportResponseDto;
 import inu.codin.codin.domain.report.dto.response.ReportSummaryResponseDTO;
 import inu.codin.codin.domain.report.entity.*;
 import inu.codin.codin.domain.report.exception.ReportAlreadyExistsException;
+import inu.codin.codin.domain.report.exception.ReportUnsupportedTypeException;
 import inu.codin.codin.domain.report.repository.CustomReportRepository;
 import inu.codin.codin.domain.report.repository.ReportRepository;
 import inu.codin.codin.domain.user.entity.UserEntity;
@@ -168,57 +169,66 @@ public class ReportService {
 
 
     @Transactional
-    public void resolveReport(ReportExecuteRequestDto requestDto) {
-        log.info("신고 처리 요청: {}", requestDto.getReportId());
+    public void handleReport(ReportExecuteRequestDto requestDto) {
+        log.info("신고 처리 요청: {}", requestDto.getReportTargetId());
+        //현재 관리자 ID
         ObjectId userId = SecurityUtils.getCurrentUserId();
-        ObjectId ReportId = new ObjectId(requestDto.getReportId());
+        ObjectId targetObjectId = new ObjectId(requestDto.getReportTargetId());
 
-
-        // 신고 존재 확인
-        ReportEntity report = reportRepository.findById(ReportId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 신고가 존재하지 않습니다. ID: " + requestDto.getReportId()));
-
-        // 이미 처리된 신고인지 확인
-        if (report.getReportStatus() == ReportStatus.SUSPENDED || report.getReportStatus() == ReportStatus.RESOLVED) {
-            throw new IllegalStateException("이미 처리된 신고입니다.");
+        // 해당 신고 대상에 대한 모든 신고 가져오기
+        List<ReportEntity> reports = reportRepository.findByReportTargetId(targetObjectId);
+        if (reports.isEmpty()) {
+            throw new NotFoundException("해당 신고 대상에 대한 신고가 존재하지 않습니다. 대상 ID: " + targetObjectId);
         }
 
-        // 신고 처리 정보 생성
-        ReportEntity.ReportActionEntity action = null;
-        if (requestDto.getSuspensionPeriod().equals(SuspensionPeriod.PERMANENT)){
-            action = ReportEntity.ReportActionEntity.builder()
-                    .actionTakenById(userId)
-                    .suspensionPeriod(requestDto.getSuspensionPeriod())
-                    .suspensionEndDate(LocalDateTime.of(9999,12,31,23,59))
-                    .build();
+        // 처리되지 않은 신고만!
+        List<ReportEntity> pendingReports = reports.stream()
+                .filter(report -> report.getReportStatus() == ReportStatus.PENDING)
+                .toList();
+
+        if (pendingReports.isEmpty()) {
+            throw new ReportAlreadyExistsException("이미 처리된 신고입니다.");
         }
-        else action = ReportEntity.ReportActionEntity.builder()
+
+        //  정지 종료일 계산
+        LocalDateTime suspensionEndDate = (requestDto.getSuspensionPeriod() == SuspensionPeriod.PERMANENT)
+                ? LocalDateTime.of(9999, 12, 31, 23, 59)
+                : LocalDateTime.now().plusDays(requestDto.getSuspensionPeriod().getDays());
+
+        //  신고 처리 정보 생성
+        ReportEntity.ReportActionEntity action = ReportEntity.ReportActionEntity.builder()
                 .actionTakenById(userId)
                 .suspensionPeriod(requestDto.getSuspensionPeriod())
-                .suspensionEndDate(LocalDateTime.now().plusDays(requestDto.getSuspensionPeriod().getDays()))
+                .suspensionEndDate(suspensionEndDate)
                 .build();
 
-        // 기존 객체의 필드를 직접 수정 (새 객체 생성 X)
-        report.updateReportSuspended(action);
+        // 신고 상태 업데이트 (모든 관련 신고 SUSPENDED로 변경)
+        pendingReports.forEach(report -> report.updateReportSuspended(action));
+
+        // 신고 대상 삭제 처리 (Soft Delete)
+        ReportTargetType targetType = reports.get(0).getReportTargetType();
+        log.info("신고 대상 삭제 처리: 대상 ID: {}, 대상 타입: {}", targetObjectId, targetType);
+        deleteReportedEntity(targetObjectId, targetType);
+
 
         //유저 Suspended - 정지 상태로 변경
-        Optional<UserEntity> user = userRepository.findById(report.getReportedUserId());
-        if (user.isEmpty()) throw new NotFoundException("존재하지 않는 회원입니다.");
+        ObjectId reportedUserId = reports.get(0).getReportedUserId();
+        UserEntity user = userRepository.findById(reportedUserId)
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 회원입니다."));
 
-        user.get().suspendUser();
-        //영구 정지
-        if (requestDto.getSuspensionPeriod() == SuspensionPeriod.PERMANENT){
-            user.get().updateTotalSuspensionEndDate(LocalDateTime.of(9999, 12 ,30, 23, 59));
-        } else {
-            LocalDateTime totalSuspensionEndDate = user.get().getTotalSuspensionEndDate();
-            user.get().updateTotalSuspensionEndDate(
-                    Objects.requireNonNullElseGet(totalSuspensionEndDate, LocalDateTime::now)
-                            .plusDays(requestDto.getSuspensionPeriod().getDays()));
-        }
+        //유저 정지시키기
+        user.suspendUser();
+        user.updateTotalSuspensionEndDate(
+                (requestDto.getSuspensionPeriod().equals(SuspensionPeriod.PERMANENT))
+                        ? LocalDateTime.of(9999, 12, 30, 23, 59)
+                        : Objects.requireNonNullElseGet(user.getTotalSuspensionEndDate(), LocalDateTime::now)
+                        .plusDays(requestDto.getSuspensionPeriod().getDays())
+        );
+
         // 업데이트된 신고 저장
-        reportRepository.save(report);
-        userRepository.save(user.get());
-        log.info("신고가 처리되었습니다. ID: {}, 처리자: {}", report.get_id(), userId);
+        reportRepository.saveAll(pendingReports);
+        userRepository.save(user);
+        log.info(" 신고 처리 완료: 신고 대상 ID: {}, reportedUserId: {}", requestDto.getReportTargetId(), reportedUserId);
 
     }
 
@@ -237,6 +247,61 @@ public class ReportService {
         }
 
         return new ReportSummaryResponseDTO(reportTypeCounts);
+    }
+
+    @Transactional
+    public void deleteReportedEntity(ObjectId reportTargetId, ReportTargetType targetType) {
+
+        switch (targetType) {
+            case POST -> {
+                PostEntity post = postRepository.findById(reportTargetId)
+                        .orElseThrow(() -> new NotFoundException("게시글을 찾을 수 없습니다."));
+                post.delete();
+                postRepository.save(post);
+                log.info(" 신고된 게시글 삭제: {}", reportTargetId);
+            }
+            case COMMENT -> {
+                CommentEntity comment = commentRepository.findById(reportTargetId)
+                        .orElseThrow(() -> new NotFoundException("댓글을 찾을 수 없습니다."));
+                comment.delete();
+                commentRepository.save(comment);
+                log.info(" 신고된 댓글 삭제: {}", reportTargetId);
+            }
+            case REPLY -> {
+                ReplyCommentEntity reply = replyRepository.findById(reportTargetId)
+                        .orElseThrow(() -> new NotFoundException("대댓글을 찾을 수 없습니다."));
+                reply.delete();
+                replyRepository.save(reply);
+                log.info("신고된 대댓글 삭제: {}", reportTargetId);
+            }
+            default -> throw new ReportUnsupportedTypeException("잘못된 신고 대상 타입입니다.");
+        }
+    }
+
+    public void resolveReport(String reportTargetId) {
+        log.info(" 신고대상 유지 요청: 신고 ID: {}", reportTargetId);
+
+        ObjectId targetObjectId = new ObjectId(reportTargetId);
+        ObjectId userId = SecurityUtils.getCurrentUserId(); // 현재 유저 ID
+
+        //  신고 존재 확인
+        List<ReportEntity> reports = reportRepository.findByReportTargetId(targetObjectId);
+
+        if (reports.isEmpty()) {
+            throw new NotFoundException("해당 신고 대상에 대한 신고가 존재하지 않습니다. 대상 ID: " + reportTargetId);
+        }
+
+        //이미 RESOLVED 또는 SUSPENDED 상태인지 확인 후, 처리되지 않은 신고만 변경
+        reports.stream()
+                .filter(report -> report.getReportStatus() == ReportStatus.PENDING)
+                .forEach(report -> {
+                    report.ReportResolved(userId); // 신고 상태를 `RESOLVED`로 변경
+                    log.info(" 신고 유지 처리 완료: 신고 ID: {}", report.get_id());
+                });
+
+        reportRepository.saveAll(reports);
+
+        log.info("총 {}개의 신고가 유지 처리되었습니다. 대상 ID: {}", reports.size(), reportTargetId);
     }
 }
 
