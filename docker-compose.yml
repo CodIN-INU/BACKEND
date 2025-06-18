@@ -1,0 +1,257 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  mongodb:
+    image: mongo:6.0
+    container_name: codin-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-password}
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - codin-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: codin-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-password}
+    volumes:
+      - redis_data:/data
+    networks:
+      - codin-network
+
+  eureka-server:
+    image: steeltoeoss/eureka-server:latest
+    container_name: codin-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    networks:
+      - codin-network
+
+  # CODIN Microservices
+  auth-service:
+    build:
+      context: ./modules/codin-auth-service
+      dockerfile: Dockerfile
+    container_name: codin-auth-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - MONGODB_URI=mongodb://${MONGODB_ROOT_USERNAME:-admin}:${MONGODB_ROOT_PASSWORD:-password}@mongodb:27017/codin-auth?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION:-604800000}
+    env_file:
+      - .env.local
+      - ./config/auth-service.env
+    depends_on:
+      - mongodb
+      - redis
+      - eureka-server
+    networks:
+      - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-service:
+    build:
+      context: ./modules/codin-user-service
+      dockerfile: Dockerfile
+    container_name: codin-user-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - MONGODB_URI=mongodb://${MONGODB_ROOT_USERNAME:-admin}:${MONGODB_ROOT_PASSWORD:-password}@mongodb:27017/codin-user?authSource=admin
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+    env_file:
+      - .env.local
+      - ./config/user-service.env
+    depends_on:
+      - mongodb
+      - eureka-server
+      - auth-service
+    networks:
+      - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  content-service:
+    build:
+      context: ./modules/codin-content-service
+      dockerfile: Dockerfile
+    container_name: codin-content-service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - MONGODB_URI=mongodb://${MONGODB_ROOT_USERNAME:-admin}:${MONGODB_ROOT_PASSWORD:-password}@mongodb:27017/codin-content?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+    env_file:
+      - .env.local
+      - ./config/content-service.env
+    depends_on:
+      - mongodb
+      - redis
+      - eureka-server
+      - auth-service
+    networks:
+      - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  notification-service:
+    build:
+      context: ./modules/codin-notification-service
+      dockerfile: Dockerfile
+    container_name: codin-notification-service
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - MONGODB_URI=mongodb://${MONGODB_ROOT_USERNAME:-admin}:${MONGODB_ROOT_PASSWORD:-password}@mongodb:27017/codin-notification?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - FCM_SERVICE_ACCOUNT_KEY=${FCM_SERVICE_ACCOUNT_KEY}
+    env_file:
+      - .env.local
+      - ./config/notification-service.env
+    depends_on:
+      - mongodb
+      - redis
+      - eureka-server
+      - auth-service
+    networks:
+      - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  chat-service:
+    build:
+      context: ./modules/codin-chat-service
+      dockerfile: Dockerfile
+    container_name: codin-chat-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - MONGODB_URI=mongodb://${MONGODB_ROOT_USERNAME:-admin}:${MONGODB_ROOT_PASSWORD:-password}@mongodb:27017/codin-chat?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - WEBSOCKET_ALLOWED_ORIGINS=${WEBSOCKET_ALLOWED_ORIGINS}
+      - WEBSOCKET_ENDPOINT=${WEBSOCKET_ENDPOINT:-/ws}
+    env_file:
+      - .env.local
+      - ./config/chat-service.env
+    depends_on:
+      - mongodb
+      - redis
+      - eureka-server
+      - auth-service
+    networks:
+      - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api-gateway:
+    build:
+      context: ./modules/codin-api-gateway
+      dockerfile: Dockerfile
+    container_name: codin-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - AUTH_SERVICE_URI=lb://codin-auth-service
+      - USER_SERVICE_URI=lb://codin-user-service
+      - CONTENT_SERVICE_URI=lb://codin-content-service
+      - NOTIFICATION_SERVICE_URI=lb://codin-notification-service
+      - CHAT_SERVICE_URI=lb://codin-chat-service
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - CORS_ALLOWED_METHODS=${CORS_ALLOWED_METHODS:-GET,POST,PUT,DELETE,OPTIONS}
+      - CORS_ALLOWED_HEADERS=${CORS_ALLOWED_HEADERS:-*}
+      - CORS_ALLOW_CREDENTIALS=${CORS_ALLOW_CREDENTIALS:-true}
+    env_file:
+      - .env.local
+      - ./config/api-gateway.env
+    depends_on:
+      - eureka-server
+      - auth-service
+      - user-service
+      - content-service
+      - notification-service
+      - chat-service
+    networks:
+      - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  codin-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
