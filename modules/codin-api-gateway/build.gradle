@@ -1,0 +1,31 @@
+dependencies {
+    implementation project(':codin-common')
+    
+    // Spring Cloud Gateway
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+    
+    // Eureka Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    
+    // Redis (Rate Limiting용)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    
+    // WebFlux (Gateway는 WebFlux 기반)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    
+    // Rate Limiting
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:7.5.0'
+    
+    // Circuit Breaker
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+}
+
+tasks.named('bootJar') {
+    enabled = true
+    archiveFileName = 'codin-api-gateway.jar'
+    mainClass = 'inu.codin.gateway.CodinApiGatewayApplication'
+}
+
+tasks.named('jar') {
+    enabled = false
+}

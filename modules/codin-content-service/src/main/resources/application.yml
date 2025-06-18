@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:codin-content-service}
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/codin-content}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+server:
+  port: ${SERVER_PORT:8083}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_EXPOSE:health,info,metrics}
+
+# S3 Configuration for content uploads
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET:codin-content-bucket}
+    region: ${AWS_S3_REGION:ap-northeast-2}
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
+
+logging:
+  level:
+    inu.codin.content: ${LOGGING_LEVEL_CONTENT:DEBUG}

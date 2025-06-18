@@ -1,0 +1,38 @@
+dependencies {
+    implementation project(':codin-common')
+    
+    // Feign Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    
+    // Eureka Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    
+    // Redis (메시지 큐용)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    // FCM (푸시 알림)
+    implementation 'com.google.firebase:firebase-admin:7.3.0'
+    
+    // Email
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    
+    // Thymeleaf (이메일 템플릿)
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+    
+    // Message Queue (RabbitMQ 또는 Kafka)
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+}
+
+tasks.named('bootJar') {
+    enabled = true
+    archiveFileName = 'codin-notification-service.jar'
+    mainClass = 'inu.codin.notification.CodinNotificationServiceApplication'
+}
+
+tasks.named('jar') {
+    enabled = false
+}

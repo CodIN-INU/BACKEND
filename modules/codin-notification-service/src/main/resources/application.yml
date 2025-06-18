@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:codin-notification-service}
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/codin-notification}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+
+server:
+  port: ${SERVER_PORT:8084}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_EXPOSE:health,info,metrics}
+
+fcm:
+  service-account-key: ${FCM_SERVICE_ACCOUNT_KEY:}
+
+logging:
+  level:
+    inu.codin.notification: ${LOGGING_LEVEL_NOTIFICATION:DEBUG}

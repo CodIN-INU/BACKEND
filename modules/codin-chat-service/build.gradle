@@ -1,0 +1,34 @@
+dependencies {
+    implementation project(':codin-common')
+    
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    
+    // Feign Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    
+    // Eureka Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    
+    // Redis (실시간 세션 관리)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    // AWS S3 (채팅 이미지 업로드)
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    
+    // Message Queue
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+}
+
+tasks.named('bootJar') {
+    enabled = true
+    archiveFileName = 'codin-chat-service.jar'
+    mainClass = 'inu.codin.chat.CodinChatServiceApplication'
+}
+
+tasks.named('jar') {
+    enabled = false
+}

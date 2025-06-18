@@ -1,0 +1,32 @@
+dependencies {
+    implementation project(':codin-common')
+    
+    // OAuth2 클라이언트
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    
+    // Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    // Feign Client (타 서비스 호출용)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    
+    // Eureka Client (Service Discovery)
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    
+    // Redis (토큰 저장용)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+}
+
+// Spring Boot 애플리케이션 JAR 생성
+tasks.named('bootJar') {
+    enabled = true
+    archiveFileName = 'codin-auth-service.jar'
+    mainClass = 'inu.codin.auth.CodinAuthServiceApplication'
+}
+
+tasks.named('jar') {
+    enabled = false
+}
