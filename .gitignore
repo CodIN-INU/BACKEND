@@ -35,5 +35,34 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables ###
+# Local environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Service-specific environment files
+config/*.env
+
+# Legacy resources (keeping for reference)
 src/main/resources
 src/main/resources/docker-compose.yml
+
+### Docker ###
+# Docker volumes
+docker-data/
+.docker/
+
+### Logs ###
+logs/
+*.log
+
+### Temporary files ###
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
