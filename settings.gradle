@@ -1,1 +1,21 @@
 rootProject.name = 'codin'
+
+// 공통 라이브러리
+include 'codin-common'
+
+// 마이크로서비스 모듈들
+include 'codin-auth-service'
+include 'codin-user-service'  
+include 'codin-content-service'
+include 'codin-notification-service'
+include 'codin-chat-service'
+include 'codin-api-gateway'
+
+// 모듈별 프로젝트 디렉토리 설정
+project(':codin-common').projectDir = new File(settingsDir, 'modules/codin-common')
+project(':codin-auth-service').projectDir = new File(settingsDir, 'modules/codin-auth-service')
+project(':codin-user-service').projectDir = new File(settingsDir, 'modules/codin-user-service')
+project(':codin-content-service').projectDir = new File(settingsDir, 'modules/codin-content-service')
+project(':codin-notification-service').projectDir = new File(settingsDir, 'modules/codin-notification-service')
+project(':codin-chat-service').projectDir = new File(settingsDir, 'modules/codin-chat-service')
+project(':codin-api-gateway').projectDir = new File(settingsDir, 'modules/codin-api-gateway')
