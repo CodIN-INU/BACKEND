@@ -1,6 +1,9 @@
 dependencies {
     implementation project(':codin-common')
     
+    // Spring Web MVC
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
     // OAuth2 클라이언트
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     

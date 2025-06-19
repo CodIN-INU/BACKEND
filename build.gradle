@@ -47,7 +47,6 @@ subprojects {
 	dependencies {
 		// Spring Boot 기본
 		implementation 'org.springframework.boot:spring-boot-starter'
-		implementation 'org.springframework.boot:spring-boot-starter-web'
 		implementation 'org.springframework.boot:spring-boot-starter-actuator'
 		
 		// Validation

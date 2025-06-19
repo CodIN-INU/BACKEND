@@ -1,6 +1,9 @@
 dependencies {
     implementation project(':codin-common')
     
+    // Spring Web MVC
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
     // Feign Client
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     
