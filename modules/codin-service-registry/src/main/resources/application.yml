@@ -1,0 +1,22 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: codin-service-registry
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false  # 자기 자신은 등록하지 않음
+    fetch-registry: false        # 다른 서비스 정보를 가져오지 않음
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  server:
+    enable-self-preservation: false  # 개발 환경에서는 self-preservation 비활성화
+
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.cloud: DEBUG

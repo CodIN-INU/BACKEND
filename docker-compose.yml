@@ -29,17 +29,22 @@ services:
     networks:
       - codin-network
 
-  eureka-server:
-    image: steeltoeoss/eureka-server:latest
-    container_name: codin-eureka
+  # CODIN Service Registry (Eureka Server)
+  service-registry:
+    build:
+      context: ./modules/codin-service-registry
+      dockerfile: Dockerfile
+    container_name: codin-service-registry
     restart: unless-stopped
     ports:
       - "8761:8761"
-    environment:
-      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
-      EUREKA_CLIENT_FETCH_REGISTRY: "false"
     networks:
       - codin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # CODIN Microservices
   auth-service:
@@ -56,7 +61,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka/
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
       - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION:-604800000}
@@ -66,7 +71,7 @@ services:
     depends_on:
       - mongodb
       - redis
-      - eureka-server
+      - service-registry
     networks:
       - codin-network
     healthcheck:
@@ -86,13 +91,13 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
       - MONGODB_URI=mongodb://${MONGODB_ROOT_USERNAME:-admin}:${MONGODB_ROOT_PASSWORD:-password}@mongodb:27017/codin-user?authSource=admin
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka/
     env_file:
       - .env.local
       - ./config/user-service.env
     depends_on:
       - mongodb
-      - eureka-server
+      - service-registry
       - auth-service
     networks:
       - codin-network
@@ -116,7 +121,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka/
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
       - AWS_S3_REGION=${AWS_S3_REGION}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
@@ -127,7 +132,7 @@ services:
     depends_on:
       - mongodb
       - redis
-      - eureka-server
+      - service-registry
       - auth-service
     networks:
       - codin-network
@@ -151,7 +156,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka/
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
@@ -163,7 +168,7 @@ services:
     depends_on:
       - mongodb
       - redis
-      - eureka-server
+      - service-registry
       - auth-service
     networks:
       - codin-network
@@ -187,7 +192,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-password}
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka/
       - WEBSOCKET_ALLOWED_ORIGINS=${WEBSOCKET_ALLOWED_ORIGINS}
       - WEBSOCKET_ENDPOINT=${WEBSOCKET_ENDPOINT:-/ws}
     env_file:
@@ -196,7 +201,7 @@ services:
     depends_on:
       - mongodb
       - redis
-      - eureka-server
+      - service-registry
       - auth-service
     networks:
       - codin-network
@@ -216,7 +221,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
+      - EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka/
       - AUTH_SERVICE_URI=lb://codin-auth-service
       - USER_SERVICE_URI=lb://codin-user-service
       - CONTENT_SERVICE_URI=lb://codin-content-service
@@ -232,7 +237,7 @@ services:
       - .env.local
       - ./config/api-gateway.env
     depends_on:
-      - eureka-server
+      - service-registry
       - auth-service
       - user-service
       - content-service

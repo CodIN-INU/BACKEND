@@ -10,6 +10,7 @@ include 'codin-content-service'
 include 'codin-notification-service'
 include 'codin-chat-service'
 include 'codin-api-gateway'
+include 'codin-service-registry'
 
 // 모듈별 프로젝트 디렉토리 설정
 project(':codin-common').projectDir = new File(settingsDir, 'modules/codin-common')
@@ -19,3 +20,4 @@ project(':codin-content-service').projectDir = new File(settingsDir, 'modules/co
 project(':codin-notification-service').projectDir = new File(settingsDir, 'modules/codin-notification-service')
 project(':codin-chat-service').projectDir = new File(settingsDir, 'modules/codin-chat-service')
 project(':codin-api-gateway').projectDir = new File(settingsDir, 'modules/codin-api-gateway')
+project(':codin-service-registry').projectDir = new File(settingsDir, 'modules/codin-service-registry')
