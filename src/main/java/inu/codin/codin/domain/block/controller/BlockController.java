@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/block")
 @RequiredArgsConstructor
+
 @Tag(name = "Block API", description = "사용자 차단 기능")
 public class BlockController {
     private final BlockService blockService;
