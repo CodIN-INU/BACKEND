@@ -1,4 +1,4 @@
-package inu.codin.codin.domain.chat.chatting.dto.response;
+package inu.codin.codin.domain.chat.dto.chatting.response;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -8,9 +8,9 @@ import java.util.List;
 @Getter
 public class ChattingAndUserIdResponseDto {
 
-    private List<ChattingResponseDto> chatting;
+    private final List<ChattingResponseDto> chatting;
 
-    private String currentUserId;
+    private final String currentUserId;
 
     @Builder
     public ChattingAndUserIdResponseDto(List<ChattingResponseDto> chatting, String currentUserId) {

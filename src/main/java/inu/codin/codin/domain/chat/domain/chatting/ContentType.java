@@ -1,4 +1,4 @@
-package inu.codin.codin.domain.chat.chatting.dto;
+package inu.codin.codin.domain.chat.domain.chatting;
 
 import lombok.Getter;
 

@@ -1,8 +1,8 @@
-package inu.codin.codin.domain.chat.chatting.dto.response;
+package inu.codin.codin.domain.chat.dto.chatting.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import inu.codin.codin.domain.chat.chatting.dto.ContentType;
-import inu.codin.codin.domain.chat.chatting.entity.Chatting;
+import inu.codin.codin.domain.chat.domain.chatting.ContentType;
+import inu.codin.codin.domain.chat.domain.chatting.Chatting;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
@@ -52,7 +52,11 @@ public class ChattingResponseDto {
         this.unread = unread;
     }
 
-    public static ChattingResponseDto of(Chatting chatting){
+    public static ChattingResponseDto of(Chatting chatting) {
+        return of(chatting, null);
+    }
+
+    public static ChattingResponseDto of(Chatting chatting, ObjectId currentUserId) {
         return ChattingResponseDto.builder()
                 .id(chatting.get_id().toString())
                 .senderId(chatting.getSenderId().toString())
@@ -60,20 +64,9 @@ public class ChattingResponseDto {
                 .createdAt(chatting.getCreatedAt())
                 .contentType(chatting.getContentType())
                 .chatRoomId(chatting.getChatRoomId().toString())
+                .currentUserId(currentUserId != null ? currentUserId.toString() : null)
                 .unread(chatting.getUnreadCount())
                 .build();
     }
 
-    public static ChattingResponseDto of(Chatting chatting, ObjectId currentUserId){
-        return ChattingResponseDto.builder()
-                .id(chatting.get_id().toString())
-                .senderId(chatting.getSenderId().toString())
-                .content(chatting.getContent())
-                .createdAt(chatting.getCreatedAt())
-                .contentType(chatting.getContentType())
-                .chatRoomId(chatting.getChatRoomId().toString())
-                .currentUserId(currentUserId.toString())
-                .unread(chatting.getUnreadCount())
-                .build();
-    }
 }

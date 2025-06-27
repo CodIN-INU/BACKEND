@@ -1,8 +1,7 @@
-package inu.codin.codin.domain.chat.chatting.entity;
+package inu.codin.codin.domain.chat.domain.chatting;
 
 import inu.codin.codin.common.dto.BaseTimeEntity;
-import inu.codin.codin.domain.chat.chatting.dto.ContentType;
-import inu.codin.codin.domain.chat.chatting.dto.request.ChattingRequestDto;
+import inu.codin.codin.domain.chat.dto.chatting.request.ChattingRequestDto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Builder;
