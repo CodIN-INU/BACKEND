@@ -1,7 +1,7 @@
-package inu.codin.codin.domain.chat.chatroom.entity;
+package inu.codin.codin.domain.chat.domain.chatroom;
 
 import inu.codin.codin.common.dto.BaseTimeEntity;
-import inu.codin.codin.domain.chat.chatroom.dto.ChatRoomCreateRequestDto;
+import inu.codin.codin.domain.chat.dto.chatroom.request.ChatRoomCreateRequestDto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,7 +25,7 @@ public class ChatRoom extends BaseTimeEntity {
     private String roomName;
 
     @NotBlank
-    private ObjectId referenceId; //채팅방이 시작한 곳의 id
+    private ObjectId referenceId; //채팅방이 시작한 곳의 id (게시글, 댓글, 대댓글 _id)
 
     @NotBlank
     private Participants participants; //참가자들의 userId (1:1 채팅에서는 두 명의 id만 들어감)
@@ -45,15 +45,20 @@ public class ChatRoom extends BaseTimeEntity {
     }
 
     public static ChatRoom of(ChatRoomCreateRequestDto chatRoomCreateRequestDto, ObjectId senderId){
-        Participants participants = new Participants();
-        participants.create(senderId);
-        participants.create(new ObjectId(chatRoomCreateRequestDto.getReceiverId()));
+        Participants participants = getParticipants(chatRoomCreateRequestDto, senderId);
         return ChatRoom.builder()
                 .roomName(chatRoomCreateRequestDto.getRoomName())
-                .referenceId(new ObjectId(chatRoomCreateRequestDto.getReferenceId()))
+                .referenceId(chatRoomCreateRequestDto.getReferenceId())
                 .participants(participants)
                 .currentMessageDate(LocalDateTime.now())
                 .build();
+    }
+
+    private static Participants getParticipants(ChatRoomCreateRequestDto chatRoomCreateRequestDto, ObjectId senderId) {
+        Participants participants = new Participants();
+        participants.create(senderId);
+        participants.create(chatRoomCreateRequestDto.getReceiverId());
+        return participants;
     }
 
     public void updateLastMessage(String message){

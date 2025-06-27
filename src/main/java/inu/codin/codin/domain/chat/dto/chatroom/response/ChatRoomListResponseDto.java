@@ -1,7 +1,7 @@
-package inu.codin.codin.domain.chat.chatroom.dto;
+package inu.codin.codin.domain.chat.dto.chatroom.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import inu.codin.codin.domain.chat.chatroom.entity.ChatRoom;
+import inu.codin.codin.domain.chat.domain.chatroom.ChatRoom;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
@@ -48,7 +48,7 @@ public class ChatRoomListResponseDto {
                 .roomName(chatRoom.getRoomName())
                 .lastMessage(chatRoom.getLastMessage()==null ? null : chatRoom.getLastMessage())
                 .currentMessageDate(chatRoom.getCurrentMessageDate()==null ? null : chatRoom.getCurrentMessageDate())
-                .unread(chatRoom.getParticipants().getInfo().get(userId).getUnreadMessage())
+                .unread(chatRoom.getParticipants().getInfo().get(userId).getUnreadCount())
                 .build();
     }
 }

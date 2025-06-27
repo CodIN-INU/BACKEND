@@ -1,6 +1,6 @@
-package inu.codin.codin.domain.chat.chatroom.dto.event;
+package inu.codin.codin.domain.chat.domain.chatroom.event;
 
-import inu.codin.codin.domain.chat.chatroom.entity.Participants;
+import inu.codin.codin.domain.chat.domain.chatroom.Participants;
 import lombok.Getter;
 import org.bson.types.ObjectId;
 import org.springframework.context.ApplicationEvent;

@@ -1,10 +1,10 @@
-package inu.codin.codin.domain.chat.chatroom.controller;
+package inu.codin.codin.domain.chat.controller;
 
 import inu.codin.codin.common.response.ListResponse;
 import inu.codin.codin.common.response.SingleResponse;
-import inu.codin.codin.domain.chat.chatroom.dto.ChatRoomCreateRequestDto;
-import inu.codin.codin.domain.chat.chatroom.dto.ChatRoomListResponseDto;
-import inu.codin.codin.domain.chat.chatroom.service.ChatRoomService;
+import inu.codin.codin.domain.chat.dto.chatroom.request.ChatRoomCreateRequestDto;
+import inu.codin.codin.domain.chat.dto.chatroom.response.ChatRoomListResponseDto;
+import inu.codin.codin.domain.chat.service.ChatRoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/chatroom")
-@Tag(name = "ChatRoom API", description = "채팅방 생성, 리스트 반환, 채팅방 나가기, 채팅방 알림 설정")
+@Tag(name = "ChatRoom API", description = "채팅방 생성, 조회, 삭제, 채팅방 알림 설정")
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
@@ -51,7 +51,7 @@ public class ChatRoomController {
     }
 
     @Operation(
-            summary = "채팅방 알림 여부 수정"
+            summary = "채팅방 알림 여부 토글 수정"
     )
     @GetMapping("/notification/{chatRoomId}")
     public ResponseEntity<SingleResponse<?>> setNotificationChatRoom(@PathVariable("chatRoomId") String chatRoomId){

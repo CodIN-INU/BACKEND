@@ -1,12 +1,13 @@
-package inu.codin.codin.domain.chat.chatroom.dto;
+package inu.codin.codin.domain.chat.dto.chatroom.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import org.bson.types.ObjectId;
 
 @Getter
-@Setter
+@Builder
 public class ChatRoomCreateRequestDto {
 
     @NotBlank
@@ -20,4 +21,12 @@ public class ChatRoomCreateRequestDto {
     @NotBlank
     @Schema(description = "채팅이 시작된 게시글, 댓글, 댓글의 id", example = "65asdf")
     private String referenceId;
+
+    public ObjectId getReceiverId(){
+        return new ObjectId(this.receiverId);
+    }
+
+    public ObjectId getReferenceId(){
+        return new ObjectId(this.referenceId);
+    }
 }
