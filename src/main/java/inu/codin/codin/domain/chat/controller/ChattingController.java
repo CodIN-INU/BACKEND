@@ -32,8 +32,9 @@ public class ChattingController {
     )
     @MessageMapping("/chats/{chatRoomId}") //client 측에서 앞에 '/pub' 를 붙여서 요청
     @SendTo("/queue/{chatRoomId}")
-    public ResponseEntity<SingleResponse<?>> sendMessage(@DestinationVariable("chatRoomId") String chatRoomId, @RequestBody @Valid ChattingRequestDto chattingRequestDto,
-                                                               @AuthenticationPrincipal Authentication authentication){
+    public ResponseEntity<SingleResponse<?>> sendMessage(@DestinationVariable("chatRoomId") String chatRoomId,
+                                                         @RequestBody @Valid ChattingRequestDto chattingRequestDto,
+                                                         @AuthenticationPrincipal Authentication authentication){
         return ResponseEntity.ok()
                 .body(new SingleResponse<>(200, "채팅 송신 완료", chattingService.sendMessage(chatRoomId, chattingRequestDto, authentication)));
     }
