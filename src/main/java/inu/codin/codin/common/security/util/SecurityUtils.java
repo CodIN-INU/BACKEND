@@ -20,8 +20,7 @@ public class SecurityUtils {
      * @throws JwtException 인증 정보가 없는 경우 예외 발생
      */
     public static ObjectId getCurrentUserId() {
-        CustomUserDetails userDetails = getCustomUserDetails();
-        return userDetails.getId();
+        return getCustomUserDetails().getId();
     }
 
     /**
@@ -31,8 +30,7 @@ public class SecurityUtils {
      * @throws JwtException 인증 정보가 없는 경우 예외 발생
      */
     public static UserRole getCurrentUserRole(){
-        CustomUserDetails userDetails = getCustomUserDetails();
-        return userDetails.getRole();
+        return getCustomUserDetails().getRole();
     }
 
     private static CustomUserDetails getCustomUserDetails() {
