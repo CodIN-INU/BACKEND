@@ -56,14 +56,14 @@ public class StompMessageService {
     @Transactional
     public void enterToChatRoom(StompHeaderAccessor headerAccessor){
         ChatRoomContext context = resolveChatRoomContext(headerAccessor);
-
         sessionStore.put(headerAccessor.getSessionId(), context.chatroom().get_id().toString());
+
+        publishingUnreadCount(context);
 
         context.chatroom.getParticipants().enter(context.user.get_id());
         chatRoomRepository.save(context.chatroom);
         log.info("[STOMP SUBSCRIBE] session : {}, chatRoomId : {} ", headerAccessor.getSessionId(), context.chatroom().get_id().toString());
 
-        publishingUnreadCount(context);
     }
 
     private void publishingUnreadCount(ChatRoomContext context) {
@@ -122,10 +122,12 @@ public class StompMessageService {
         ChatRoom chatRoom = getChatRoom(chatRoomId);
         int unreadCount = chatRoom.getParticipants().getUnreadCount(userId);
 
-        //유저가 읽지 않은 채팅만 가져와서 채팅의 unreadCount를 줄인다.
-        List<Chatting> unreadChats = chattingRepository.findAllByChatRoomIdOrderByCreatedAtDesc(chatRoomId, PageRequest.of(0, unreadCount));
-        if (!unreadChats.isEmpty())
+        List<Chatting> unreadChats = List.of();
+        if (unreadCount > 0) { //unreadCount가 있을 경우,
+            //유저가 읽지 않은 채팅만 가져와서 채팅의 unreadCount를 줄인다.
+            unreadChats = chattingRepository.findAllByChatRoomIdOrderByCreatedAtDesc(chatRoomId, PageRequest.of(0, unreadCount));
             bulkUpdateUnreadCount(unreadChats);
+        }
         return unreadChats;
     }
 
@@ -136,6 +138,8 @@ public class StompMessageService {
             Query query = new Query(where("_id").is(chat.get_id()));
             Update update = new Update().inc("unreadCount", -1);
             bulkOps.updateOne(query, update);
+
+            chat.minusUnread();
         });
 
         bulkOps.execute();
