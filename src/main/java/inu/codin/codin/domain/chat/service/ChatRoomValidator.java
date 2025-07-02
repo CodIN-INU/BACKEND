@@ -32,7 +32,7 @@ public class ChatRoomValidator {
 
     private void validateNotSelfChat(ChatRoomCreateRequestDto chatRoomCreateRequestDto, ObjectId senderId) {
         if (senderId.equals(chatRoomCreateRequestDto.getReceiverId()))
-            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_EXISTED);
+            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_CREATE_MYSELF);
     }
 
     private void validateChatRoomDuplicated(ChatRoomCreateRequestDto chatRoomCreateRequestDto, ObjectId senderId) {
