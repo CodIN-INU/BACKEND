@@ -41,6 +41,11 @@ public class Participants {
         }).filter(Objects::nonNull).toList();
     }
 
+    private ParticipantInfo findParticipant(ObjectId userId) {
+        return Optional.ofNullable(info.get(userId))
+                .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.PARTICIPANTS_NOT_FOUND));
+    }
+
     public void enter(ObjectId userId) {
         findParticipant(userId).connect();
     }
@@ -88,9 +93,16 @@ public class Participants {
         return findParticipant(userId).getUnreadCount();
     }
 
-    private ParticipantInfo findParticipant(ObjectId userId) {
-        return Optional.ofNullable(info.get(userId))
-                .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.PARTICIPANTS_NOT_FOUND));
+    public boolean checkAllLeaved() {
+        return info.values().stream().allMatch(ParticipantInfo::isLeaved);
+    }
+
+    public boolean isLeaved(ObjectId senderId) {
+        return findParticipant(senderId).isLeaved();
+    }
+
+    public void remain(ObjectId senderId) {
+        findParticipant(senderId).remain();
     }
 
     public record ReceiverInfo(ObjectId receiverId, int unreadMessage){}

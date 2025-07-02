@@ -3,6 +3,7 @@ package inu.codin.codin.domain.chat.service;
 import inu.codin.codin.common.exception.NotFoundException;
 import inu.codin.codin.domain.chat.domain.chatroom.ChatRoom;
 import inu.codin.codin.domain.chat.domain.chatroom.ParticipantInfo;
+import inu.codin.codin.domain.chat.domain.chatroom.Participants;
 import inu.codin.codin.domain.chat.dto.chatroom.request.ChatRoomCreateRequestDto;
 import inu.codin.codin.domain.chat.exception.ChatRoomErrorCode;
 import inu.codin.codin.domain.chat.exception.ChatRoomException;
@@ -39,9 +40,9 @@ public class ChatRoomValidator {
         Optional<ChatRoom> existedChatroom = chatRoomRepository.findByReferenceIdAndParticipantsContaining(
                 chatRoomCreateRequestDto.getReferenceId(), senderId, chatRoomCreateRequestDto.getReceiverId());
         if (existedChatroom.isPresent()) {
-            ParticipantInfo participantInfo= existedChatroom.get().getParticipants().getInfo().get(senderId);
-            if (participantInfo.isLeaved()) {
-                participantInfo.remain();
+            Participants participants = existedChatroom.get().getParticipants();
+            if (participants.isLeaved(senderId)){
+                participants.remain(senderId);
                 chatRoomRepository.save(existedChatroom.get());
             }
             //client 측에서 303 에러를 받아서 해당 채팅방으로 redirect
@@ -58,9 +59,7 @@ public class ChatRoomValidator {
     }
 
     public void validateParticipantsAllLeaved(String chatRoomId, ChatRoom chatRoom) {
-        boolean isAllLeaved = chatRoom.getParticipants().getInfo().values()
-                .stream()
-                .allMatch(ParticipantInfo::isLeaved);  // 모든 참가자가 떠났는지 확인
+        boolean isAllLeaved = chatRoom.getParticipants().checkAllLeaved(); // 모든 참가자가 떠났는지 확인
         if (isAllLeaved) {
             chatRoom.delete();
             chatRoomRepository.save(chatRoom);
