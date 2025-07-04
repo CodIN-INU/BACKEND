@@ -12,6 +12,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Document(collection = "chatroom")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -59,6 +60,11 @@ public class ChatRoom extends BaseTimeEntity {
         participants.create(senderId);
         participants.create(chatRoomCreateRequestDto.getReceiverId());
         return participants;
+    }
+
+    public boolean isExistedReactivateParticipants(ObjectId userId) {
+        List<ParticipantInfo> info = this.participants.remainReceiver(userId);
+        return !info.isEmpty();
     }
 
     public void updateLastMessage(String message){

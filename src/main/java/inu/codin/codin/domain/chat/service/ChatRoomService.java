@@ -2,6 +2,7 @@ package inu.codin.codin.domain.chat.service;
 
 import inu.codin.codin.common.security.util.SecurityUtils;
 import inu.codin.codin.domain.block.service.BlockService;
+import inu.codin.codin.domain.chat.domain.chatroom.ParticipantInfo;
 import inu.codin.codin.domain.chat.dto.chatroom.request.ChatRoomCreateRequestDto;
 import inu.codin.codin.domain.chat.dto.chatroom.response.ChatRoomCreateResponseDto;
 import inu.codin.codin.domain.chat.dto.chatroom.response.ChatRoomListResponseDto;
@@ -55,10 +56,10 @@ public class ChatRoomService {
         List<ChatRoom> chatRooms = chatRoomRepository.findByParticipantIsNotLeavedAndDeletedIsNull(userId);
         log.info("[채팅방 조회 결과] 유저 ID: {}가 참여 중인 채팅방 개수: {}", userId, chatRooms.size());
         return chatRooms.stream()
-                .filter(chatRoom -> chatRoom.getParticipants().getInfo().keySet().stream()
-                        .noneMatch(blockedUsersId::contains))
-                .sorted(Comparator.comparing(ChatRoom::getCurrentMessageDate,Comparator.nullsLast(Comparator.reverseOrder())))
-                .map(chatRoom -> ChatRoomListResponseDto.of(chatRoom, userId)).toList();
+                .filter(chatRoom -> chatRoom.getParticipants().getNoneMatchBlocked(blockedUsersId))
+                .sorted(Comparator.comparing(ChatRoom::getCurrentMessageDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(chatRoom -> ChatRoomListResponseDto.of(chatRoom, userId))
+                .toList();
     }
 
     @Transactional
@@ -94,4 +95,8 @@ public class ChatRoomService {
             });
     }
 
+    void reactivateChatRoomForUser(ChatRoom chatRoom, ObjectId userId) {
+        if (chatRoom.isExistedReactivateParticipants(userId))
+            chatRoomRepository.save(chatRoom);
+    }
 }

@@ -2,7 +2,6 @@ package inu.codin.codin.domain.chat.service;
 
 import inu.codin.codin.common.security.util.SecurityUtils;
 import inu.codin.codin.domain.chat.domain.chatroom.ChatRoom;
-import inu.codin.codin.domain.chat.domain.chatroom.ParticipantInfo;
 import inu.codin.codin.domain.chat.domain.chatting.Chatting;
 import inu.codin.codin.domain.chat.domain.chatting.event.ChattingArrivedEvent;
 import inu.codin.codin.domain.chat.domain.chatting.event.ChattingNotificationEvent;
@@ -34,8 +33,6 @@ import java.util.stream.Stream;
 @Slf4j
 public class ChattingService {
 
-    private final ChatRoomRepository chatRoomRepository;
-
     private final ChatRoomService chatRoomService;
     private final ChattingRepository chattingRepository;
     private final S3Service s3Service;
@@ -46,8 +43,8 @@ public class ChattingService {
         ChatRoom chatRoom = chatRoomService.getChatRoom(chatRoomId);
         ObjectId userId = ((CustomUserDetails) authentication.getPrincipal()).getId();
 
-        //상대가 채팅방을 나간 상태라면 다시 불러와서 채팅 시작
-        reactivateChatRoomForUser(chatRoom, userId);
+        //상대가 채팅방을 나간 상태라면 다시 활성화하여 채팅 시작
+        chatRoomService.reactivateChatRoomForUser(chatRoom, userId);
 
         int unreadCount = getUnreadCount(chatRoom);
         Chatting chatting = Chatting.of(chatRoom.get_id(), chattingRequestDto, userId, unreadCount);
@@ -60,7 +57,7 @@ public class ChattingService {
     }
 
     private void publishUnreadCountAndNotify(Chatting chatting, ChatRoom chatRoom, ObjectId userId) {
-        //상대 유저가 접속하지 않은 상태라면 unread 개수 업데이트 및 마지막 대화 내용 업데이트
+        //미접속 상태의 유저들에게 unread 개수 업데이트 및 마지막 대화 내용 업데이트
         eventPublisher.publishEvent(new ChattingArrivedEvent(this, chatting, chatRoom));
         //알림 보내기
         eventPublisher.publishEvent(new ChattingNotificationEvent(this, userId, chatRoom));
@@ -96,13 +93,6 @@ public class ChattingService {
         List<String> imageUrls = s3Service.handleImageUpload(chatImages);
         log.info("[이미지 메시지 전송 성공] 업로드된 이미지 URL 개수: {}", imageUrls.size());
         return imageUrls;
-    }
-
-    private void reactivateChatRoomForUser(ChatRoom chatRoom, ObjectId userId) {
-        List<ParticipantInfo> participantInfos = chatRoom.getParticipants().remainReceiver(userId);
-        if (!participantInfos.isEmpty()){
-            chatRoomRepository.save(chatRoom);
-        }
     }
 
     private int getUnreadCount(ChatRoom chatRoom) {

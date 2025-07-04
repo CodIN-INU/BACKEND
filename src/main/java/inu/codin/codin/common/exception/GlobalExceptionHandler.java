@@ -2,7 +2,14 @@ package inu.codin.codin.common.exception;
 
 import inu.codin.codin.common.response.ExceptionResponse;
 import inu.codin.codin.common.security.exception.JwtException;
-import inu.codin.codin.domain.chat.exception.*;
+import inu.codin.codin.domain.block.exception.BlockErrorCode;
+import inu.codin.codin.domain.block.exception.BlockException;
+import inu.codin.codin.domain.chat.exception.ChatRoomErrorCode;
+import inu.codin.codin.domain.chat.exception.ChatRoomException;
+import inu.codin.codin.domain.chat.exception.ChattingErrorCode;
+import inu.codin.codin.domain.chat.exception.ChattingException;
+import inu.codin.codin.domain.info.exception.InfoErrorCode;
+import inu.codin.codin.domain.info.exception.InfoException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.http.HttpStatus;
@@ -29,12 +36,19 @@ public class GlobalExceptionHandler {
                 .body(new ExceptionResponse(code.message(), code.httpStatus().value()));
     }
 
+    @ExceptionHandler(BlockException.class)
+    protected ResponseEntity<ExceptionResponse> handleBlockException(BlockException e) {
+        BlockErrorCode code = e.getErrorCode();
+        return ResponseEntity.status(code.httpStatus())
+                .body(new ExceptionResponse(code.message(), code.httpStatus().value()));
+    }
+
     @ExceptionHandler(ChatRoomException.class)
     protected ResponseEntity<ExceptionResponse> handleChatRoomException(ChatRoomException e) {
         ChatRoomErrorCode code = e.getErrorCode();
         String message = code.message();
-        if (e instanceof ChatRoomExistedException existedException) //client 측에서 303 상태 코드 확인 후 message의 chatRoomId로 리다이렉션
-            message = message + "/" + existedException.getChatRoomId();
+//        if (e instanceof ChatRoomExistedException existedException) //client 측에서 303 상태 코드 확인 후 message의 chatRoomId로 리다이렉션
+//            message = message + "/" + existedException.getChatRoomId();
         return ResponseEntity.status(code.httpStatus())
                 .body(new ExceptionResponse(message, code.httpStatus().value()));
     }
@@ -42,6 +56,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ChattingException.class)
     protected ResponseEntity<ExceptionResponse> handleChattingException(ChattingException e) {
         ChattingErrorCode code = e.getErrorCode();
+        return ResponseEntity.status(code.httpStatus())
+                .body(new ExceptionResponse(code.message(), code.httpStatus().value()));
+    }
+
+    @ExceptionHandler(InfoException.class)
+    protected ResponseEntity<ExceptionResponse> handleInfoException(InfoException e) {
+        InfoErrorCode code = e.getErrorCode();
         return ResponseEntity.status(code.httpStatus())
                 .body(new ExceptionResponse(code.message(), code.httpStatus().value()));
     }

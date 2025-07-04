@@ -3,18 +3,15 @@ package inu.codin.codin.domain.chat.domain.chatroom;
 import inu.codin.codin.domain.chat.exception.ChatRoomErrorCode;
 import inu.codin.codin.domain.chat.exception.ChatRoomException;
 import lombok.Getter;
-import lombok.Setter;
 import org.bson.types.ObjectId;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
-@Setter
 public class Participants {
 
     private Map<ObjectId, ParticipantInfo> info = new ConcurrentHashMap<>();
@@ -107,6 +104,11 @@ public class Participants {
 
     public void remain(ObjectId senderId) {
         findParticipant(senderId).remain();
+    }
+
+    public boolean getNoneMatchBlocked(List<ObjectId> blockedUsersId) {
+        return info.keySet().stream()
+                .noneMatch(blockedUsersId::contains);
     }
 
     public record ReceiverInfo(ObjectId receiverId, int unreadMessage){}

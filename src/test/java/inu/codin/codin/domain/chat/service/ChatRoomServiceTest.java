@@ -7,6 +7,7 @@ import inu.codin.codin.domain.chat.domain.chatroom.Participants;
 import inu.codin.codin.domain.chat.domain.chatroom.event.ChatRoomNotificationEvent;
 import inu.codin.codin.domain.chat.dto.chatroom.request.ChatRoomCreateRequestDto;
 import inu.codin.codin.domain.chat.dto.chatroom.response.ChatRoomCreateResponseDto;
+import inu.codin.codin.domain.chat.dto.chatroom.response.ChatRoomListResponseDto;
 import inu.codin.codin.domain.chat.exception.ChatRoomErrorCode;
 import inu.codin.codin.domain.chat.exception.ChatRoomException;
 import inu.codin.codin.domain.chat.exception.ChatRoomExistedException;
@@ -25,6 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,7 +84,6 @@ class ChatRoomServiceTest {
         //then
         verify(chatRoomRepository, times(1)).save(any(ChatRoom.class));
         verify(eventPublisher, times(1)).publishEvent(any(ChatRoomNotificationEvent.class));
-
         assertThat(createResponseDto.getChatRoomId()).isEqualTo(chatRoomId.toString());
     }
 
@@ -140,12 +141,35 @@ class ChatRoomServiceTest {
     @Test
     @DisplayName("채팅방 목록 전체 조회")
     void 채팅방_목록_전체_조회(){
+        ChatRoom chatRoom = getChatRoom();
+        given(blockService.getBlockedUsers()).willReturn(List.of());
+        given(chatRoomRepository.findByParticipantIsNotLeavedAndDeletedIsNull(senderId)).willReturn(List.of(chatRoom));
+
+        //when
+        List<ChatRoomListResponseDto> responseDtos = chatRoomService.getAllChatRoomByUser();
+
+        //then
+        assertThat(responseDtos.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("차단한 유저를 제외한 채팅방 목록 전체 조회")
+    void 차단_유저_제외_채팅방_목록_전체_조회(){
         //blockedUser 해결 후 테스트 진행
+        ChatRoom chatRoom = getChatRoom();
+        given(blockService.getBlockedUsers()).willReturn(List.of(receiverId));
+        given(chatRoomRepository.findByParticipantIsNotLeavedAndDeletedIsNull(senderId)).willReturn(List.of(chatRoom));
+
+        //when
+        List<ChatRoomListResponseDto> responseDtos = chatRoomService.getAllChatRoomByUser();
+
+        //then
+        assertThat(responseDtos.size()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("채팅방 조회 실패 시 에러 반환")
-    void 채팅방_조회_실패_ChatRoomException(){
+    void 채팅방_조회_실패_ChatRoomException() {
         //given
         given(chatRoomRepository.findBy_idAndDeletedAtIsNull(chatRoomId)).willReturn(Optional.empty());
 
@@ -157,7 +181,7 @@ class ChatRoomServiceTest {
 
     @Test
     @DisplayName("채팅방 나가기")
-    void 채팅방_나가기(){
+    void 채팅방_나가기() {
         //given
         ChatRoom chatRoom = getChatRoom();
         given(chatRoomRepository.findBy_idAndDeletedAtIsNull(chatRoomId)).willReturn(Optional.ofNullable(chatRoom));
@@ -173,7 +197,7 @@ class ChatRoomServiceTest {
 
     @Test
     @DisplayName("채팅방 알림 설정 true -> false")
-    void 채팅방_알림_끄기(){
+    void 채팅방_알림_끄기() {
         //given
         ChatRoom chatRoom = getChatRoom(); //채팅방 생성 시 알림 true
         given(chatRoomRepository.findBy_idAndDeletedAtIsNull(chatRoomId)).willReturn(Optional.of(chatRoom));
@@ -189,7 +213,7 @@ class ChatRoomServiceTest {
 
     @Test
     @DisplayName("채팅방 알림 설정 false -> true")
-    void 채팅방_알림_켜기(){
+    void 채팅방_알림_켜기() {
         //given
         ChatRoom chatRoom = getChatRoom();
         chatRoom.getParticipants().toggleNotification(senderId);
@@ -205,11 +229,27 @@ class ChatRoomServiceTest {
         verify(chatRoomRepository, times(1)).save(any());
     }
 
+    @Test
+    @DisplayName("채팅방을 나간 유저가 있다면 다시 활성화")
+    void 채팅방_나간_유저_다시_활성화() {
+        //given
+        ChatRoom chatRoom = getChatRoom();
+        chatRoom.getParticipants().leave(receiverId);
+
+        //when
+        chatRoomService.reactivateChatRoomForUser(chatRoom, senderId);
+
+        //then
+        assertFalse(chatRoom.getParticipants().isLeaved(receiverId));
+    }
 
     private ChatRoom getChatRoom() {
         Participants participant = new Participants();
         participant.create(senderId);
-        return ChatRoom.builder().participants(participant).build();
+        participant.create(receiverId);
+        ChatRoom chatRoom = ChatRoom.builder().participants(participant).build();
+        ReflectionTestUtils.setField(chatRoom, "_id", chatRoomId);
+        return chatRoom;
     }
 
 }
