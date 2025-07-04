@@ -34,8 +34,7 @@ public class BlockService {
             log.error("");
             throw new BlockException(BlockErrorCode.SELF_BLOCKED);
         }
-        userValidator.validateUserExists(userId, () -> new BlockException(BlockErrorCode.BLOCKING_USER_NOT_FOUND));
-        userValidator.validateUserExists(blockedId, () -> new BlockException(BlockErrorCode.BLOCKED_USER_NOT_FOUND));
+        validateUser(userId, blockedId);
 
         blockRepository.findByUserId(userId)
                 .ifPresentOrElse(blockEntity -> {
@@ -61,8 +60,7 @@ public class BlockService {
         if (userId.equals(blockedId)) {
             throw new BlockException(BlockErrorCode.SELF_UNBLOCKED);
         }
-        userValidator.validateUserExists(userId, () -> new BlockException(BlockErrorCode.BLOCKING_USER_NOT_FOUND));
-        userValidator.validateUserExists(blockedId, () -> new BlockException(BlockErrorCode.BLOCKED_USER_NOT_FOUND));
+        validateUser(userId, blockedId);
 
         blockRepository.findByUserId(userId)
                 .ifPresentOrElse(blockEntity -> {
@@ -84,5 +82,15 @@ public class BlockService {
         return blockRepository.findByUserId(SecurityUtils.getCurrentUserId())
                 .map(BlockEntity::getBlockedUsers)
                 .orElse(List.of());
+    }
+
+    /**
+     * 현재 유저와 차단할 유저의 존재 여부 검증
+     * @param userId 현재 로그인된 유저의 pk
+     * @param blockedId 차단할 유저의 pk
+     */
+    private void validateUser(ObjectId userId, ObjectId blockedId) {
+        userValidator.validateUserExists(userId, () -> new BlockException(BlockErrorCode.BLOCKING_USER_NOT_FOUND));
+        userValidator.validateUserExists(blockedId, () -> new BlockException(BlockErrorCode.BLOCKED_USER_NOT_FOUND));
     }
 }
