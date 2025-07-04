@@ -10,6 +10,7 @@ import inu.codin.codin.domain.chat.repository.ChatRoomRepository;
 import inu.codin.codin.domain.notification.service.NotificationService;
 import inu.codin.codin.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChattingEventListener {
 
     private final ChatRoomRepository chatRoomRepository;
@@ -44,6 +46,7 @@ public class ChattingEventListener {
         updateLastMessage(event);
         updateUnreadCountAndNotify(event.getChatting(), event.getChatRoom());
         chatRoomRepository.save(event.getChatRoom());
+        log.info("[handleChattingArrivedEvent] ChattingArrivedEvent 완료");
     }
 
     private void updateLastMessage(ChattingArrivedEvent event){
@@ -67,6 +70,7 @@ public class ChattingEventListener {
     private void sendUnreadCountChange(ObjectId receiverId, Map<String, String> result) {
         userRepository.findByUserId(receiverId)
                 .ifPresent(userEntity -> template.convertAndSendToUser(userEntity.getEmail(), "/queue/chatroom/unread", result));
+        log.info("[sendUnreadCountChange] user : {}, /queue/chatroom/unread 전송 완료", receiverId);
     }
 
     /**
@@ -79,6 +83,7 @@ public class ChattingEventListener {
         ChatRoom chatRoom = event.getChatRoom();
         chatRoom.getParticipants().getUsersToNotify(event.getUserId())
                 .forEach(userId -> notificationService.sendNotificationMessageByChat(userId, chatRoom.get_id()));
+        log.info("[handleChattingNotificationEvent] ChattingNotificationEvent 완료");
     }
 
     /**
@@ -95,6 +100,7 @@ public class ChattingEventListener {
                         )).toList();
 
         template.convertAndSend("/queue/unread/"+ chattingUnreadCountEvent.getChatRoomId(), unreadChattingList);
+        log.info("[updateUnreadCountEvent] ChattingUnreadCountEvent 완료");
     }
 
 }
