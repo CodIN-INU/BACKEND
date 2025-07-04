@@ -21,41 +21,41 @@ public class ParticipantInfo extends BaseTimeEntity {
         this.userId = userId;
     }
 
-    public static ParticipantInfo enter(ObjectId userId) {
+    static ParticipantInfo enter(ObjectId userId) {
         return new ParticipantInfo(userId);
     }
 
-    public void updateNotification() {
+    void updateNotification() {
         this.notificationsEnabled = !notificationsEnabled;
     }
 
-    public void incrementUnreadCount() {
+    void incrementUnreadCount() {
         this.unreadCount++;
     }
 
-    public void connect() {
+    void connect() {
         this.isConnected = true;
         this.unreadCount = 0;
     }
 
-    public void disconnect() {
+    void disconnect() {
         this.isConnected = false;
         this.unreadCount = 0;
         setUpdatedAt();
     }
 
-    public void leave() {
+    void leave() {
         this.isLeaved = true;
         this.whenLeaved = LocalDateTime.now();
         disconnect();
     }
 
-    public void remain() {
+    void remain() {
         this.isLeaved = false;
     }
 
-    public boolean isNotified(ObjectId userId){
-        return !this.userId.equals(userId) && this.notificationsEnabled & !this.isConnected;
+    boolean isNotified(ObjectId userId) {
+        return !this.userId.equals(userId) && this.notificationsEnabled && !this.isConnected;
     }
 
 }
