@@ -192,7 +192,7 @@ class ChatRoomServiceTest {
     void 채팅방_알림_켜기(){
         //given
         ChatRoom chatRoom = getChatRoom();
-        chatRoom.getParticipants().getInfo().get(senderId).updateNotification();
+        chatRoom.getParticipants().toggleNotification(senderId);
         //채팅방 알림 false
         given(chatRoomRepository.findBy_idAndDeletedAtIsNull(chatRoomId)).willReturn(Optional.of(chatRoom));
 

@@ -131,7 +131,7 @@ class ChatRoomValidatorTest {
     private ChatRoom getChatRoomWithLeaveParticipants() {
         Participants participants = new Participants();
         participants.create(senderId);
-        participants.getInfo().get(senderId).leave();
+        participants.leave(senderId);
         return ChatRoom.builder().participants(participants).build();
     }
 }
