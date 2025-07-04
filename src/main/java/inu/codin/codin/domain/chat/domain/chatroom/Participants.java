@@ -29,16 +29,15 @@ public class Participants {
      * @return 메세지를 받는 유저들의 정보 리스트
      */
     public List<ReceiverInfo> getDisconnectedUsersAndUpdateUnreadCount(ObjectId senderId) {
-        return info.keySet().stream().map(receiverId -> {
-            if (!receiverId.equals(senderId)) {
-                ParticipantInfo receiverInfo = info.get(receiverId);
-                if (!receiverInfo.isConnected()){
+        return info.keySet().stream()
+                .filter(receiverId -> !receiverId.equals(senderId))
+                .map(info::get)
+                .filter(receiverInfo -> !receiverInfo.isConnected())
+                .map(receiverInfo -> {
                     receiverInfo.incrementUnreadCount();
-                    return new ReceiverInfo(receiverId, receiverInfo.getUnreadCount());
-                }
-            }
-            return null;
-        }).filter(Objects::nonNull).toList();
+                    return new ReceiverInfo(receiverInfo.getUserId(), receiverInfo.getUnreadCount());
+                })
+                .toList();
     }
 
     private ParticipantInfo findParticipant(ObjectId userId) {
@@ -73,9 +72,14 @@ public class Participants {
     }
 
     public List<ParticipantInfo> remainReceiver(ObjectId userId) {
+        List<ParticipantInfo> participantInfos = findReceiversToRemain(userId);
+        participantInfos.forEach(ParticipantInfo::remain);
+        return participantInfos;
+    }
+
+    private List<ParticipantInfo> findReceiversToRemain(ObjectId userId){
         return info.values().stream()
                 .filter(info -> !info.getUserId().equals(userId) && info.isLeaved())
-                .peek(ParticipantInfo::remain)
                 .toList();
     }
 
