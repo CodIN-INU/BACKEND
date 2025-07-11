@@ -69,9 +69,14 @@ dependencies {
 	//jsoup
 	implementation 'org.jsoup:jsoup:1.15.3'
 	//json
-	implementation 'com.fasterxml.jackson.core:jackson-core:2.16.1'
+	implementation 'com.fasterxml.jackson.core:jackson-core'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.core:jackson-annotations'
 	//oauth2
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	// Kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
