@@ -1,7 +1,9 @@
 package inu.codin.codin.domain.post.entity;
 
 import inu.codin.codin.common.dto.BaseTimeEntity;
-import inu.codin.codin.domain.post.exception.StateUpdateException;
+import inu.codin.codin.domain.post.dto.request.PostCreateRequestDTO;
+import inu.codin.codin.domain.post.schedular.exception.SchedulerErrorCode;
+import inu.codin.codin.domain.post.schedular.exception.SchedulerException;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,6 +11,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "posts")
@@ -37,27 +40,40 @@ public class PostEntity extends BaseTimeEntity {
         this.userId = userId;
         this.title = title;
         this.content = content;
-        this.postImageUrls = postImageUrls;
+        this.postImageUrls = postImageUrls != null ? new ArrayList<>(postImageUrls) : new ArrayList<>();
         this.isAnonymous = isAnonymous;
         this.postCategory = postCategory;
         this.postStatus = postStatus;
     }
 
+    public static PostEntity create(ObjectId userId, PostCreateRequestDTO dto, List<String> imageUrls) {
+        return new PostEntity(
+                new ObjectId(),
+                userId,
+                dto.getPostCategory(),
+                dto.getTitle(),
+                dto.getContent(),
+                imageUrls != null ? new ArrayList<>(imageUrls) : new ArrayList<>(),
+                dto.isAnonymous(),
+                PostStatus.ACTIVE
+        );
+    }
+
     public void updatePostContent(String content, List<String> postImageUrls) {
         this.content = content;
-        this.postImageUrls = postImageUrls;
+        this.postImageUrls = postImageUrls != null ? new ArrayList<>(postImageUrls) : new ArrayList<>();
     }
 
     public void updatePostAnonymous(boolean isAnonymous) {
         if (this.isAnonymous == isAnonymous) {
-            throw new StateUpdateException("현재 상태와 동일한 상태로 변경할 수 없습니다.");
+            throw new SchedulerException(SchedulerErrorCode.DUPLICATE_ANONYMOUS_STATE);
         }
         this.isAnonymous = isAnonymous;
     }
 
     public void updatePostStatus(PostStatus postStatus) {
         if (this.postStatus == postStatus) {
-            throw new StateUpdateException("현재 상태와 동일한 상태로 변경할 수 없습니다.");
+            throw new SchedulerException(SchedulerErrorCode.DUPLICATE_POST_STATUS);
         }
         this.postStatus = postStatus;
     }
@@ -65,14 +81,26 @@ public class PostEntity extends BaseTimeEntity {
         this.postImageUrls.remove(imageUrl);
     }
 
-    //댓글+대댓글 수 업데이트
+    //댓글+대댓글 수 증가
     public void plusCommentCount() {
         this.commentCount++;
+    }
+
+    //댓글+대댓글 수 감소
+    public void minusCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
     }
 
     //신고 수 업데이트
     public void updateReportCount(int reportCount) {
         this.reportCount=reportCount;
+    }
+
+    //작성자 확인 로직
+    public boolean isWriter(ObjectId userId) {
+        return this.userId.equals(userId);
     }
 
 }
