@@ -26,16 +26,13 @@ public class UserKafkaListener {
     )
     @SendTo("ticketing-user-reply")
     public UserReply handleUserRequest(UserRequest req) {
-        // 1) DB 또는 서비스 호출로 userId 조회
-        UserEntity userEntity = userRepository.findByEmail(req.username())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        String userId = userEntity.get_id().toString();
-        String name = userEntity.getName();
-
-        log.info("[handleUserRequest] Received request for user {} with id {}", req.username(), userId);
-
-        // 2) 응답 발행
-        return new UserReply(req.requestId(), userId, name);
+        try {
+            UserEntity user = userRepository.findByEmail(req.username())
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+            return new UserReply(req.requestId(), user.get_id().toString(), user.getName());
+        } catch (Exception ex) {
+            log.warn("[handleUserRequest] 요청 처리 실패 (requestId={}): {}", req.requestId(), ex.toString());
+            return null;
+        }
     }
 }
