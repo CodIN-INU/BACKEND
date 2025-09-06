@@ -6,15 +6,18 @@ import inu.codin.codin.domain.post.dto.request.PostAnonymousUpdateRequestDTO;
 import inu.codin.codin.domain.post.dto.request.PostContentUpdateRequestDTO;
 import inu.codin.codin.domain.post.dto.request.PostCreateRequestDTO;
 import inu.codin.codin.domain.post.dto.request.PostStatusUpdateRequestDTO;
+import inu.codin.codin.domain.post.dto.response.CursorPageResponse;
 import inu.codin.codin.domain.post.dto.response.PostDetailResponseDTO;
 import inu.codin.codin.domain.post.dto.response.PostPageResponse;
 import inu.codin.codin.domain.post.entity.PostCategory;
+import inu.codin.codin.domain.post.service.PostCursorService;
 import inu.codin.codin.domain.post.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +31,11 @@ import java.util.List;
 @RequestMapping("/posts")
 @Validated
 @Tag(name = "POST API", description = "게시글 API")
+@RequiredArgsConstructor
 public class PostController {
 
     private final PostService postService;
-
-    public PostController(PostService postService) {
-        this.postService = postService;
-    }
+    private final PostCursorService postCursorService;
 
     @Operation(
             summary = "게시물 작성",
@@ -151,5 +152,16 @@ public class PostController {
     public ResponseEntity<SingleResponse<?>> getBestPosts(@RequestParam("pageNumber") int pageNumber){
         return ResponseEntity.ok()
                 .body(new SingleResponse<>(200, "Top3로 선정된 게시글들 모두 반환 완료", postService.getBestPosts(pageNumber)));
+    }
+
+    @Operation(summary = "카테고리별 삭제되지 않은 게시물 조회 - 커서(ObjectId) 기반")
+    @GetMapping("/category/cursor")
+    public ResponseEntity<SingleResponse<CursorPageResponse<PostDetailResponseDTO>>> getAllPostsCursor(
+            @RequestParam PostCategory postCategory,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(new SingleResponse<>(200, "커서 기반 카테고리별 게시물 조회 성공",
+                postCursorService.getAllPostsByCursorIdOnly(postCategory, cursor, Math.min(limit, 100))));
     }
 }
