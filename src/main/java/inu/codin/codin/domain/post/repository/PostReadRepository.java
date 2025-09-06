@@ -29,11 +29,11 @@ public class PostReadRepository {
     public List<PostEntity> findByCategoryWithIdCursor(String postCategory, List<ObjectId> blockedUsers, ObjectId cursorId, int limit) {
         Criteria base = new Criteria().andOperator(
                 new Criteria().orOperator(
-                        Criteria.where("deletedAt").is(null),
-                        Criteria.where("deletedAt").exists(false)
+                        Criteria.where("deleted_at").is(null),
+                        Criteria.where("deleted_at").exists(false)
                 ),
                 Criteria.where("postStatus").is("ACTIVE"),
-                Criteria.where("postCategory").regex("^" + Pattern.quote(postCategory))
+                Criteria.where("postCategory").is(postCategory)
         );
 
         // 차단 유저가 없을 때

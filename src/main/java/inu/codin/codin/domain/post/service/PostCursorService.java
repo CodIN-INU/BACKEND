@@ -47,7 +47,7 @@ public class PostCursorService {
 
         // 다음 커서 id 생성
         String nextCursor = null;
-        if (!batch.isEmpty()) {
+        if (hasNext && !batch.isEmpty()) {
             PostEntity tail = batch.get(batch.size() - 1);
             nextCursor = ObjectIdUtil.toString(tail.get_id());
         }
