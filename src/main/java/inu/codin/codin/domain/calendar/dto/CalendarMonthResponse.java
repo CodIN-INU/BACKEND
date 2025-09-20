@@ -1,5 +1,7 @@
 package inu.codin.codin.domain.calendar.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,7 +21,8 @@ public class CalendarMonthResponse {
     private final List<CalendarDayResponse> days;
 
     @Builder
-    public CalendarMonthResponse(int year, int month, List<CalendarDayResponse> days) {
+    @JsonCreator
+    public CalendarMonthResponse(@JsonProperty("year") int year, @JsonProperty("month") int month, @JsonProperty("days") List<CalendarDayResponse> days) {
         this.year = year;
         this.month = month;
         this.days = days;
