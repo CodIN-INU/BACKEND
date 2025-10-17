@@ -1,5 +1,7 @@
 package inu.codin.codin.domain.calendar.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import inu.codin.codin.common.dto.Department;
 import inu.codin.codin.common.util.ObjectIdUtil;
 import inu.codin.codin.domain.calendar.entity.CalendarEntity;
@@ -20,7 +22,8 @@ public class EventDto {
     private final Department department;
 
     @Builder
-    public EventDto(String eventId, String content, Department department) {
+    @JsonCreator
+    public EventDto(@JsonProperty("eventId") String eventId, @JsonProperty("content") String content, @JsonProperty("department") Department department) {
         this.eventId = eventId;
         this.content = content;
         this.department = department;
